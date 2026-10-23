@@ -5,7 +5,22 @@ using namespace std;
 
 void move_left(int board[][5], int numrows = 5)
 {
-	//CODE HERE
+	for (int j = 0; j < 5; j++) {
+		for (int i = 1; i < 5; i++)
+		{
+			if (board[j][i-1] == 0) {
+				board[j][i-1] = board[j][i] + board[j][i-1];
+				board[j][i] = 0;
+			}
+			else {
+				if (board[j][i] == board[j][i-1]) 
+				{
+					board[j][i-1] = board[j][i] + board[j][i-1];
+					board[j][i] = 0;
+				}
+			}
+		}
+	}
 }
 
 void move_right(int board[][5], int numrows = 5)
