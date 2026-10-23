@@ -20,7 +20,62 @@ void move_up(int board[][5], int numrows = 5)
 
 void move_down(int board[][5], int numrows = 5)
 {
-	//CODE HERE
+	//move one column at a time
+	for(int c = 0; c < 5; c++)
+	{
+		//array holds only the numbers that are not zero in this column.
+		int values[5] = {0};
+		int count = 0;
+
+		//read the column from bottom to top and save the non-zero values.
+		for(int r = numrows - 1; r >= 0; r--)
+		{
+			if(board[r][c] != 0)
+			{
+				values[count] = board[r][c];
+				count = count + 1;
+			}
+		}
+
+		//merge equal numbers together
+		for(int i = 0; i < count; i++)
+		{
+			if(i + 1 < count && values[i] == values[i + 1])
+			{
+				//double the current value
+				values[i] = values[i] * 2;
+
+				//move later values left to fill gap
+				for(int j = i + 1; j < count - 1; j++)
+				{
+					values[j] = values[j + 1];
+				}
+
+				//set the last value to 0 because it was pushed out
+				values[count - 1] = 0;
+
+				//one value was removed so reduce the count
+				count = count - 1;
+
+				//check this same position again
+				i = i - 1;
+			}
+		}
+
+		//write the merged values back into the board from bottom to top
+		for(int r = numrows - 1, i = 0; r >= 0; r--)
+		{
+			if(i < count)
+			{
+				board[r][c] = values[i];
+				i = i + 1;
+			}
+			else
+			{
+				board[r][c] = 0;
+			}
+		}
+	}
 }
 
 
@@ -79,4 +134,3 @@ void insert_random(int board[][5], int numrows = 5)
 
 	}
 }
-
