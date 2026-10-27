@@ -25,7 +25,55 @@ void move_left(int board[][5], int numrows = 5)
 
 void move_right(int board[][5], int numrows = 5)
 {
-	//CODE HERE
+	//move each row separately as tiles move horizontally
+	for(int r = 0; r < numrows; r++)
+	{
+		//save the row's non-zero tiles starting from the right to left
+		int values[5] = {0};
+		int count = 0;
+		for(int c = 4; c >= 0; c--)
+		{
+			if (board[r][c] != 0)
+			{
+				values[count] = board[r][c];
+				count = count + 1;
+			}
+		}
+
+		//combine matching neighbors
+		//advancing by two prevents a tile that has just been doubled from merging again in same move
+		int merged[5] = {0};
+		int merged_count = 0;
+		for(int i = 0; i < count; i++)
+		{
+			if(i + 1 < count && values[i] == values[i + 1])
+			{
+				merged[merged_count] = values[i] * 2;
+				merged_count = merged_count + 1;
+				i = i + 1;
+			}
+			else
+			{
+				merged[merged_count] = values[i];
+				merged_count = merged_count + 1;
+			}
+		}
+
+		//write the tiles back from right to left, then fill empty spaces with 0
+		int i = 0;
+		for(int c = 4; c >= 0; c--)
+		{
+			if(i < merged_count)
+			{
+				board[r][c] = merged[i];
+				i = i + 1;
+			}
+			else
+			{
+				board[r][c] = 0;
+			}
+		}
+	}
 }
 
 void move_up(int board[][5], int numrows = 5)
