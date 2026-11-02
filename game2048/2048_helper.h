@@ -78,7 +78,61 @@ void move_right(int board[][5], int numrows = 5)
 
 void move_up(int board[][5], int numrows = 5)
 {
-	//CODE HERE
+	//move each column separately as tiles move vertically
+	for(int c = 0; c < 5; c++)
+	{
+		//save the non-zero tiles in this column
+		int values[5] = {0};
+		int count = 0;
+
+		//read the column from top to bottom
+		//this keeps the first tile at the top and the last tile at the bottom
+		for(int r = 0; r < numrows; r++)
+		{
+			if(board[r][c] != 0)
+			{
+				values[count] = board[r][c];
+				count = count + 1;
+			}
+		}
+
+		//combine matching neighboring tiles once
+		//using a second array keeps each doubled tile from merging again
+		int merged[5] = {0};
+		int merged_count = 0;
+		for(int i = 0; i < count; i++)
+		{
+			if(i + 1 < count && values[i] == values[i + 1])
+			{
+				//two equal tiles become one tile with double the value
+				merged[merged_count] = values[i] * 2;
+				merged_count = merged_count + 1;
+
+				//skip the second tile because it was already combined
+				i = i + 1;
+			}
+			else
+			{
+				//there was no matching tile, so keep this tile as it is
+				merged[merged_count] = values[i];
+				merged_count = merged_count + 1;
+			}
+		}
+
+		//write the merged tiles back from top to bottom
+		for(int r = 0; r < numrows; r++)
+		{
+			if(r < merged_count)
+			{
+				board[r][c] = merged[r];
+			}
+			else
+			{
+				//use 0 to show that the remaining space is empty
+				board[r][c] = 0;
+			}
+		}
+	}
 }
 
 void move_down(int board[][5], int numrows = 5)
