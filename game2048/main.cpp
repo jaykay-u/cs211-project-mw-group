@@ -16,6 +16,9 @@ int main()
 
 	cout << "Initial Board : [5x5] :" << endl;
 	print_board(board);
+	int score = 0;
+	int successful_moves = 0;
+	cout << "Score: " << score << "\tSuccessful moves: " << successful_moves << endl;
 
 	char choice = 'u';	//initialized
 	while (choice != 'e')
@@ -25,17 +28,31 @@ int main()
 		cout << "Choice: ";
 		cin >> choice;
 
-		if (choice == 'u')
-			move_up(board, size);
-		else if (choice == 'd')
-			move_down(board, size);
-		else if (choice == 'l')
-			move_left(board, size);
-		else if (choice == 'r')
-			move_right(board, size);
+		bool valid_move = true;
+		bool changed = false;
 
-		insert_random(board, size);
+		if (choice == 'u')
+			changed = move_up(board, size, &score);
+		else if (choice == 'd')
+			changed = move_down(board, size, &score);
+		else if (choice == 'l')
+			changed = move_left(board, size, &score);
+		else if (choice == 'r')
+			changed = move_right(board, size, &score);
+		else if (choice == 'e')
+			valid_move = false;
+		else
+			valid_move = false;
+
+		//only successful moves insert one tile and increase the move count
+		if(valid_move && changed)
+		{
+			successful_moves = successful_moves + 1;
+			insert_random(board, size);
+		}
+
 		print_board(board);
+		cout << "Score: " << score << "\tSuccessful moves: " << successful_moves << endl;
 
 	}
 
