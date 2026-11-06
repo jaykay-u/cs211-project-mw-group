@@ -3,142 +3,216 @@
 #include <iomanip>
 using namespace std;
 
-void move_left(int board[][5], int numrows = 5)
+//collapse_line slides one line toward index 0 and merges equal neighbors once
+int collapse_line(int line[5], int &score)
 {
-	for (int j = 0; j < 5; j++) {
-		for (int i = 1; i < 5; i++)
+	//save only the non-zero tiles in their current order
+	int values[5] = {0};
+	int count = 0;
+
+	for(int i = 0; i < 5; i++)
+	{
+		if(line[i] != 0)
 		{
-			if (board[j][i-1] == 0) {
-				board[j][i-1] = board[j][i] + board[j][i-1];
-				board[j][i] = 0;
-			}
-			else {
-				if (board[j][i] == board[j][i-1]) 
-				{
-					board[j][i-1] = board[j][i] + board[j][i-1];
-					board[j][i] = 0;
-				}
-			}
+			values[count] = line[i];
+			count = count + 1;
 		}
 	}
+
+	//merge each pair only once and leave the merged tile for this move
+	int merged[5] = {0};
+	int merged_count = 0;
+	for(int i = 0; i < count; i++)
+	{
+		if(i + 1 < count && values[i] == values[i + 1])
+		{
+			merged[merged_count] = values[i] * 2;
+			score = score + merged[merged_count];
+			merged_count = merged_count + 1;
+			i = i + 1;
+		}
+		else
+		{
+			merged[merged_count] = values[i];
+			merged_count = merged_count + 1;
+		}
+	}
+
+	//write the collapsed line back and fill the remaining spaces with 0
+	for(int i = 0; i < 5; i++)
+	{
+		if(i < merged_count)
+		{
+			line[i] = merged[i];
+		}
+		else
+		{
+			line[i] = 0;
+		}
+	}
+
+	return merged_count;
 }
 
-void move_right(int board[][5], int numrows = 5)
+bool move_left(int board[][5], int numrows = 5, int *score = nullptr)
 {
-	//move each row separately as tiles move horizontally
+	int original[5][5] = {};
+	int move_score = 0;
+
+	//save the original board so we can tell whether this move changed it
 	for(int r = 0; r < numrows; r++)
 	{
-		//save the row's non-zero tiles starting from the right to left
-		int values[5] = {0};
-		int count = 0;
-		for(int c = 4; c >= 0; c--)
-		{
-			if (board[r][c] != 0)
-			{
-				values[count] = board[r][c];
-				count = count + 1;
-			}
-		}
+		for(int c = 0; c < 5; c++)
+			original[r][c] = board[r][c];
+	}
 
-		//combine matching neighbors
-		//advancing by two prevents a tile that has just been doubled from merging again in same move
-		int merged[5] = {0};
-		int merged_count = 0;
-		for(int i = 0; i < count; i++)
-		{
-			if(i + 1 < count && values[i] == values[i + 1])
-			{
-				merged[merged_count] = values[i] * 2;
-				merged_count = merged_count + 1;
-				i = i + 1;
-			}
-			else
-			{
-				merged[merged_count] = values[i];
-				merged_count = merged_count + 1;
-			}
-		}
+	//collapse each row toward the left side
+	for(int r = 0; r < numrows; r++)
+		collapse_line(board[r], move_score);
 
-		//write the tiles back from right to left, then fill empty spaces with 0
-		int i = 0;
-		for(int c = 4; c >= 0; c--)
+	if(score != nullptr)
+		*score = *score + move_score;
+
+	//compare the original board with the board after the move
+	for(int r = 0; r < numrows; r++)
+	{
+		for(int c = 0; c < 5; c++)
 		{
-			if(i < merged_count)
-			{
-				board[r][c] = merged[i];
-				i = i + 1;
-			}
-			else
-			{
-				board[r][c] = 0;
-			}
+			if(original[r][c] != board[r][c])
+				return true;
 		}
 	}
+	return false;
 }
 
-void move_up(int board[][5], int numrows = 5)
+bool move_right(int board[][5], int numrows = 5, int *score = nullptr)
 {
-	//CODE HERE
+	int original[5][5] = {};
+	int move_score = 0;
+
+	for(int r = 0; r < numrows; r++)
+	{
+		for(int c = 0; c < 5; c++)
+		{
+			original[r][c] = board[r][c];
+		}
+	}
+
+	for(int r = 0; r < numrows; r++)
+	{
+		//reverse the row so the right side becomes the left side
+		int line[5] = {0};
+		for(int c = 0; c < 5; c++)
+			line[c] = board[r][4 - c];
+
+		collapse_line(line, move_score);
+
+		//reverse the result back into the original row positions
+		for(int c = 0; c < 5; c++)
+			board[r][4 - c] = line[c];
+	}
+
+	if(score != nullptr)
+		*score = *score + move_score;
+
+	for(int r = 0; r < numrows; r++)
+	{
+		for(int c = 0; c < 5; c++)
+		{
+			if(original[r][c] != board[r][c])
+				return true;
+		}
+	}
+	return false;
 }
 
-void move_down(int board[][5], int numrows = 5)
+bool move_up(int board[][5], int numrows = 5, int *score = nullptr)
 {
-	//move one column at a time
+	int original[5][5] = {};
+	int move_score = 0;
+
+	for(int r = 0; r < numrows; r++)
+	{
+		for(int c = 0; c < 5; c++)
+			original[r][c] = board[r][c];
+	}
+
+	//move each column upward by collapsing every column toward row 0
 	for(int c = 0; c < 5; c++)
 	{
-		//array holds only the numbers that are not zero in this column.
-		int values[5] = {0};
-		int count = 0;
-
-		//read the column from bottom to top and save the non-zero values.
-		for(int r = numrows - 1; r >= 0; r--)
+		int line[5] = {0};
+		for(int r = 0; r < numrows; r++)
 		{
-			if(board[r][c] != 0)
-			{
-				values[count] = board[r][c];
-				count = count + 1;
-			}
+			line[r] = board[r][c];
 		}
 
-		//merge equal numbers together
-		for(int i = 0; i < count; i++)
+		collapse_line(line, move_score);
+
+		for(int r = 0; r < numrows; r++)
 		{
-			if(i + 1 < count && values[i] == values[i + 1])
-			{
-				//double the current value
-				values[i] = values[i] * 2;
+			board[r][c] = line[r];
+		}
+	}
 
-				//move later values left to fill gap
-				for(int j = i + 1; j < count - 1; j++)
-				{
-					values[j] = values[j + 1];
-				}
+	if(score != nullptr)
+		*score = *score + move_score;
 
-				//set the last value to 0 because it was pushed out
-				values[count - 1] = 0;
+	for(int r = 0; r < numrows; r++)
+	{
+		for(int c = 0; c < 5; c++)
+		{
+			if(original[r][c] != board[r][c])
+				return true;
+		}
+	}
+	return false;
+}
 
-				//one value was removed so reduce the count
-				count = count - 1;
+bool move_down(int board[][5], int numrows = 5, int *score = nullptr)
+{
+	int original[5][5] = {};
+	int move_score = 0;
 
-				//check this same position again
-				i = i - 1;
-			}
+	for(int r = 0; r < numrows; r++)
+	{
+		for(int c = 0; c < 5; c++)
+		{
+			original[r][c] = board[r][c];
+		}
+	}
+
+	for(int c = 0; c < 5; c++)
+	{
+		//reverse the column so the bottom side becomes index 0
+		int line[5] = {0};
+		for(int r = 0; r < numrows; r++)
+		{
+			line[r] = board[4 - r][c];
 		}
 
-		//write the merged values back into the board from bottom to top
-		for(int r = numrows - 1, i = 0; r >= 0; r--)
+		collapse_line(line, move_score);
+
+		//reverse the result back into the original column positions
+		for(int r = 0; r < numrows; r++)
 		{
-			if(i < count)
+			board[4 - r][c] = line[r];
+		}
+	}
+
+	if(score != nullptr)
+		*score = *score + move_score;
+
+	for(int r = 0; r < numrows; r++)
+	{
+		for(int c = 0; c < 5; c++)
+		{
+			if(original[r][c] != board[r][c])
 			{
-				board[r][c] = values[i];
-				i = i + 1;
-			}
-			else
-			{
-				board[r][c] = 0;
+				return true;
 			}
 		}
 	}
+	return false;
 }
 
 
@@ -151,9 +225,13 @@ void print_board(int board[][5], int numrows = 5)
 		for (int c = 0; c < 5; c++)
 		{
 			if(board[r][c] > 0)
+			{
 				cout << "\t|" << right << setw(6) << setfill(' ') << board[r][c];
+			}
 			else
+			{
 				cout << "\t|" << right << setw(6) << setfill(' ') << " ";
+			}
 
 			//cout << board[r][c] << "\t|\t";
 		}
@@ -168,7 +246,7 @@ void print_board(int board[][5], int numrows = 5)
 void insert_random(int board[][5], int numrows = 5)
 {
 	int r, c;
-	//count empty
+	//count empty cells in the board
 	int empty_count = 0;
 	for (int r = 0; r < numrows; r++)
 	{
@@ -179,18 +257,19 @@ void insert_random(int board[][5], int numrows = 5)
 		}
 	}
 
+	//insert exactly one tile only when the caller has a successful move
 	if (empty_count > 0)
 	{
 		while (true)
 		{
 			//generate random location r, c
 			r = rand() % numrows;
-			c = rand() % numrows;
+			c = rand() % 5;
 			//check if empty
 			if (board[r][c] == 0)
 			{
-				//add number randomly {2,4}
-				board[r][c] = 2 * (1 + (rand() % 2));
+				//add a new tile with the value 2
+				board[r][c] = 2;
 				break;
 			}
 		}
